@@ -3,6 +3,7 @@ package ru.example;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -11,19 +12,8 @@ import java.util.Date;
 @Component
 public class ValidatorComponent {
 
-    /*public boolean isValidDate(String dateStr) {
-        try {
-            if (StringUtils.hasText(dateStr)) {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                sdf.setLenient(false);
-                sdf.parse(dateStr);
-                return true;
-            }
-        } catch (ParseException e) {
-            // обработка исключения, например, можно логировать ошибку
-        }
-        return false;
-    }*/
+
+    @LogTransformation(logFile = "myLog.log")
     public boolean isValidDate(Autorization a){
 
         DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
@@ -35,10 +25,29 @@ public class ValidatorComponent {
                 a.setAccessDate(startDate);
                 return true;
             }
+            else {
+                System.out.println("НЕ ВЕРНАЯ ДАТА : " + a.getFileName() + " " + a.getUsername() +" "+ a.getFio());
+
+                try { // запись в лог
+                    Method method = ValidatorComponent.class.getMethod("isValidDate", Autorization.class);
+                    String errString = "Не верный формат даты";
+                    LogTransformationClass.logTransformation(a, method, errString);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         } catch (ParseException e) {
             //e.printStackTrace();
             // преобразовать не удалось, пишем в лог
             //TODO  Если дата не задана, то человек не вносится в базу, а сведения о имени файла и значении человека заносятся в отдельный лог.
+            System.out.println("Пустая data: " + a.getFileName() + " " + a.getUsername() +" "+ a.getFio());
+            try { // запись в лог
+                Method method = ValidatorComponent.class.getMethod("isValidDate", Autorization.class);
+                String errString = "Дата пришла пустой";
+                LogTransformationClass.logTransformation(a, method, errString);
+            } catch (Exception ee) {
+                e.printStackTrace();
+            }
         }
         return false;
     }
