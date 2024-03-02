@@ -1,5 +1,6 @@
 package ru.example;
 
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import org.springframework.context.annotation.AnnotationConfigApplicationContextExtensionsKt;
@@ -19,19 +20,20 @@ public class AutorizationParser {
             pathAndFileName = path + fileName;
         }
 
-        System.out.println("init parse...");
+        //System.out.println("init parse...");
         ArrayList<File> list = getFileAll(path, pathAndFileName); // массив всех файлов csv из каталога path
-        System.out.println(" в каталоге " + path + " нашли " + list.size() + " файлов .csv");
+        //System.out.println(" в каталоге " + path + " нашли " + list.size() + " файлов .csv");
 
         List<Autorization> autorizationList = new ArrayList<>(); // массив хранения готовых объектов авторизации
         for (File file : list) {
             String nameFile = file.toString();
             try {
-                System.out.println(" parsing file :" + nameFile);
+                //System.out.println(" parsing file :" + nameFile);
                 CSVReader reader =
                         new CSVReaderBuilder(new FileReader(nameFile)).
-                                withSkipLines(1). //считываем залоговки
-                                build();
+                                withSkipLines(1) //считываем залоговки
+                                .withCSVParser(new CSVParserBuilder().withSeparator(';').build())// установим разделитель, по умолчанию ","
+                                .build();
 
                 autorizationList = reader.readAll().stream().map(data -> {
                                                                             Autorization autorizationObj = new Autorization();
@@ -44,14 +46,13 @@ public class AutorizationParser {
                                                                             return autorizationObj;
                                                                         }
                                                                  ).toList();
-                System.out.println("где то здесь ");
                 autorizationList.forEach(System.out::println);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
         }
-        System.out.println(autorizationList);
+        //System.out.println(autorizationList);
         return autorizationList;
     }
 

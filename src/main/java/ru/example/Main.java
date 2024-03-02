@@ -69,7 +69,6 @@ public class Main {
         4. в конце цикла все закрываем
         */
         //-------------------------- чтение данных из файла и запись в лист----------------
- /*Временно отключил чтение из файла, там есть какая то проблема, данные пока набьем вручную
 
         System.out.println("START READER autoriz2UTF.csv");
         // блок получения пути и файла
@@ -78,27 +77,18 @@ public class Main {
         Scanner in = new Scanner(System.in);
         System.out.print("Input file path: ");
         String filePath = in.nextLine(); // путь должен быть в формате C:\temp\autoriz.csv
-        filePath = "C:\\temp\\"; // TODO на время разарботки заглушки
+        filePath = "C:\\temp\\"; // TODO на время разработки заглушки
         System.out.printf("Your path: ", filePath);
         String fileName = in.nextLine(); // путь должен быть в формате C:\temp\autoriz.csv
-        fileName = "autoriz2UTF.csv"; // TODO на время разарботки заглушки
+        fileName = "autoriz2UTF.csv"; // TODO на время разработки заглушки
         System.out.printf("Your file: ", fileName);
         in.close();
 
 
         System.out.println();
         AutorizationParser autorizationParser = new AutorizationParser();
-//        autorizationParser.parse(CSV_FILE_PATH, fileName);
         List<Autorization> autorizationList = autorizationParser.parse(filePath, fileName);
-*/
 
-        List<Autorization> autorizationList = new ArrayList<>();
-        Autorization a = new Autorization();
-        a.setApplication("webStore");
-        a.setaccessDateStr("04/03/2024");
-        a.setUsername("userPushkin");
-        a.setFio("костя пушкин");
-        autorizationList.add(a);
 
         System.out.println("FINISH READER autoriz2UTF.csv");
 
@@ -111,7 +101,7 @@ public class Main {
             Autorization element = iter.next();
             // Промежуточная компонента проверки даты проверяет её наличие. Если дата не задана, то человек не вносится в базу, а сведения о имени файла и значении человека заносятся в отдельный лог.
             //if (checkDate(element)) {
-
+            System.out.println("Обработаем запись " + element.toString());
             if (validatorComponent.isValidDate(element)) {
 
                 element.setFio(validatorComponent.isValidateFio(element.getFio())); // Нормализуем ФИО
@@ -144,6 +134,7 @@ public class Main {
 
             }
         }
+
         // открываем файл
         //Scanner in = new Scanner(System.in);
         //System.out.print("Input file path: ");
