@@ -2,6 +2,13 @@ package ru.example;
 
 
 import org.apache.catalina.User;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -10,18 +17,48 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.sql.Timestamp;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Date;
+import jakarta.persistence.*;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
 @SpringBootApplication(scanBasePackages = "ru.example")
 public class Main {
+    private static final String CSV_FILE_PATH = "C:/temp/";
+    // проверка наличия даты, если дата корректная, то запишем в виде даты
+    /*public static boolean checkDate(Autorization a){
+        String access_date = a.getaccessDateStr();
+        DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+        Date startDate = null;
+        try {
+            startDate = df.parse(access_date);
+            a.setAccessDate(startDate);
+        } catch (ParseException e) {
+            //e.printStackTrace();
+            // преобразовать не удалось, пишем в лог
+            return false;
+        }
+        return true;
+    }
+    */
     public static void main(String[] args) throws Exception {
+
+        ValidatorComponent validatorComponent = new ValidatorComponent();
         /*логика следующая
         1. открываем ApplicationContext context = SpringApplication.run(Main.class);
         2. читаем данные из файла построчно
@@ -32,121 +69,128 @@ public class Main {
         4. в конце цикла все закрываем
         */
         //-------------------------- чтение данных из файла и запись в лист----------------
-        // открываем файл
+ /*Временно отключил чтение из файла, там есть какая то проблема, данные пока набьем вручную
+
+        System.out.println("START READER autoriz2UTF.csv");
+        // блок получения пути и файла
+
+        // получим Путь
         Scanner in = new Scanner(System.in);
         System.out.print("Input file path: ");
         String filePath = in.nextLine(); // путь должен быть в формате C:\temp\autoriz.csv
-        System.out.printf("Your file: ", filePath);
+        filePath = "C:\\temp\\"; // TODO на время разарботки заглушки
+        System.out.printf("Your path: ", filePath);
+        String fileName = in.nextLine(); // путь должен быть в формате C:\temp\autoriz.csv
+        fileName = "autoriz2UTF.csv"; // TODO на время разарботки заглушки
+        System.out.printf("Your file: ", fileName);
         in.close();
 
-        BufferedReader reader = new BufferedReader(new FileReader(filePath));
 
-        // считываем построчно
-        String line = null;
-        Scanner scanner = null;
-        int index = 0;
+        System.out.println();
+        AutorizationParser autorizationParser = new AutorizationParser();
+//        autorizationParser.parse(CSV_FILE_PATH, fileName);
+        List<Autorization> autorizationList = autorizationParser.parse(filePath, fileName);
+*/
+
         List<Autorization> autorizationList = new ArrayList<>();
+        Autorization a = new Autorization();
+        a.setApplication("webStore");
+        a.setaccessDateStr("04/03/2024");
+        a.setUsername("userPushkin");
+        a.setFio("костя пушкин");
+        autorizationList.add(a);
 
-        while ((line = reader.readLine()) != null) {
-            Autorization autorization = new Autorization();
-            scanner = new Scanner(line);
-            scanner.useDelimiter(";");
-            while (scanner.hasNext()) {
-                String data = scanner.next();
-                if (index == 0)
-                    autorization.setUsername(data);
-                else if (index == 1)
-                    autorization.setFio(data);
-                /*else if (index == 2)
-                    /*String dateInString = "19590709";
-                    LocalDate date = LocalDate.parse(dateInString, DateTimeFormatter.BASIC_ISO_DATE);
-                    * /
+        System.out.println("FINISH READER autoriz2UTF.csv");
 
-                    //LocalDate date = LocalDate.parse("2018-05-05");
-                    //LocalDateTime dateTime = LocalDateTime.parse("2018-05-05T11:50:55");
-                    //autorization.setAccess_date(new LocalDate.parse(data, formatter));
-                    //autorization.setAccess_date(LocalDate.parse(data, DateTimeFormatter.ofPattern("DD/MMMM/YYYY")));
-                    //autorization.setAccess_date(LocalDate.parse("01/01/2024"));
-                    LocalDateTime dateTime = LocalDateTime.parse("2018-05-05T11:50:55");
-                    */
-                else if (index == 3)
-                    autorization.setApplication(data);
-                else
-                    System.out.println("Некорректные данные::" + data);
-                index++;
+        // теперь надо каждую запись из autorizationList обрабатывать по условиям, если они все выполняться
+        // то записать данные в базу по двум таблицам
+        ApplicationContext context = SpringApplication.run(Main.class);
+        UsersRepo repoUser = context.getBean(UsersRepo.class);
+
+        for (ListIterator<Autorization> iter = autorizationList.listIterator(); iter.hasNext(); ) {
+            Autorization element = iter.next();
+            // Промежуточная компонента проверки даты проверяет её наличие. Если дата не задана, то человек не вносится в базу, а сведения о имени файла и значении человека заносятся в отдельный лог.
+            //if (checkDate(element)) {
+
+            if (validatorComponent.isValidDate(element)) {
+
+                element.setFio(validatorComponent.isValidateFio(element.getFio())); // Нормализуем ФИО
+                element.setApplication(validatorComponent.isApplication(element.getApplication())); // Нормализуем приложение
+                // обработка таблицы user
+                Users user = repoUser.findByUsername(element.getUsername());
+                if (user != null) {
+                    System.out.println("нашли" + user);
+                    //Вопрос, если изменилось ФИО, тогда надо обновлять ?, если да, то раскоментарить
+//                    user.setFio(element.getFio());
+//                    repoUser.save(user);
+                } else {
+                    System.out.println("Пользователь не найден.");
+
+                    user = new Users(); // если не нашли, тогда создаем
+                    user.setUsername(element.getUsername());
+                    user.setFio(element.getFio());
+                    repoUser.save(user);
+                }
+
+                // обработка таблицы Logins
+                Logins logins = new Logins();
+                logins.setUser_id(user.getId());
+                logins.setAccess_date(element.getAccessDate()); // дату из строки переводим в дату в setAccess_date
+
+                logins.setApplication(element.getApplication()); // тип приложения соответствует одному из: “web”, “mobile”, others, сразу проверяется
+                LoginsRepo repoLogins = context.getBean(LoginsRepo.class);
+                //repoLogins.saveAll(logins);
+                repoLogins.save(logins);
+
             }
-            index = 0;
-            System.out.println(autorization.toString());
-            autorizationList.add(autorization);
         }
-
-        //закрываем наш ридер
-        reader.close();
-
-        System.out.println(autorizationList);
-
-        //-------------------------- запись данных в базу --------------
-
- //       ApplicationContext context = SpringApplication.run(Main.class);
-/*
-        System.out.println("--1");
-        DepartmentRepo repo = context.getBean(DepartmentRepo.class);
-        System.out.println("--2");
-        //Department dep = repo.findById(d, 1L);
-        repo.findAll().forEach(System.out::println);
-        System.out.println("--2.1 " +  repo.findById(1L));
-        Department dep = repo.findById(1L).get(); //.setName("ssssss");
-        dep.setName("ddddddddd");
-        System.out.println("--3");
-        repo.save(dep);
-
-        System.out.println("--");
-        Department dep2 = new Department();
-        //dep2.setId(6l);
-        dep2.setName("tttttttttttt");
-        repo.save(dep2);
-
-        System.out.println("--5");
-        repo.findAll().forEach(System.out::println);
-        System.out.println("--6");
-*/
-
-//        System.out.println("--1");
-//        UsersRepo repoUser = context.getBean(UsersRepo.class);
-//        LoginsRepo repoLogins = context.getBean(LoginsRepo.class);
-//        System.out.println("--2");
-//        repoUser.findAll().forEach(System.out::println); // смотрим все записи в БД
-/*
-        System.out.println("Обновим пользователя с ID = 1 " +  repo.findById(1L));
-        Users user = repo.findById(1L).get(); // получим пользователя по ID
-        user.setUsername("firstUser");
-        user.setFio("Иванов петр сергеевич");
-        System.out.println("--3");
-        repo.save(user); // сохраняем в БД
-*/
-
-//        System.out.println("Добавим нового пользователя ");
-//        Users user2 = new Users();
-//        user2.setUsername("ForUser");
-//        user2.setFio("чубиков сергей мунисович");
+        // открываем файл
+        //Scanner in = new Scanner(System.in);
+        //System.out.print("Input file path: ");
+        //String filePath = in.nextLine(); // путь должен быть в формате C:\temp\autoriz.csv
+//        StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure().build();
+//        SessionFactory sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
 //
-//        Logins log1 = new Logins(); // добавим данные авторизации
-////        log1.setAccess_date(parseTimestamp("2020-05-01 12:30:00"));
-//        log1.setApplication("Прога1");
-//        log1.setUser_id(user2.getId());
+//        try (Session session = sessionFactory.openSession()) {
+//            Transaction transaction = session.beginTransaction();
 //
-//        Logins log2 = new Logins(); // добавим данные авторизации
-////        log2.setAccess_date(parseTimestamp("2020-05-01 12:30:00"));
-//        log2.setApplication("Прога1");
-//        log2.setUser_id(user2.getId());
+//            try (BufferedReader reader = new BufferedReader(new FileReader("C:\\temp\\autoriz2UTF.csv"))) {
+//                String line;
+//                while ((line = reader.readLine()) != null) {
+//                    String[] parts = line.split(";");
+//                    String username = parts[0].trim();
+//                    String password = parts[1].trim();
+//                    String fio = parts[3].trim();
+//                    String appName = parts[4].trim();
 //
-//        System.out.println(user2.toString());
+//                    // Check if user with username already exists
+//                    User existingUser = (User) session.createQuery("FROM users WHERE username = :username")
+//                            .setParameter("username", username)
+//                            .uniqueResult();
+//                    Users user;
+//                    if (existingUser == null) {
+//                        user = new Users();
+//                        user.setFio(fio);
+//                        user.setUsername(username);
+//                        session.save(user);
+//                    }
+//                    else {
+//                        user = new Users();
+//                        user.setFio(fio);
+//                        user.setUsername(username);
 //
-//        repoUser.save(user2);
-//        repoLogins.save(log1);
-//        //repoLogins.save(log2);
+//                    }
+//                    session.save(new Logins(new Date(), user, appName)
 //
-//        repoUser.findAll().forEach(System.out::println);
-//        System.out.println("Закончили");
+//                    );
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            transaction.commit();
+//        }
+//
+//        sessionFactory.close();
     }
 }

@@ -15,12 +15,20 @@ public class Users {
     @Column(name = "fio")
     String fio;
 
+    public Users() {
+
+    }
+    public Users(String username, String fio) {
+        this.username = username;
+        this.fio = fio;
+    }
+
     public void setUsername(String username) {
         this.username = username;
     }
 
     public void setFio(String fio) {
-        String fio2 = "";
+      /*  String fio2 = "";
         fio2 = fio2 + fio.substring(0, 1).toUpperCase(); //первый символ делаем заглавным
         for (int i = 1; i < fio.length(); i++) {
             // смотрим, был ли слева пробел:
@@ -29,13 +37,15 @@ public class Users {
             else
                 fio2 = fio2 + fio.substring(i, i+1);
         }
-
-        this.fio = fio2;
+*/
+        this.fio = fio; //fio2;
     }
 
     public Integer getId() {
         return id;
     }
+
+
 
     @Override
     public String toString() {

@@ -6,9 +6,10 @@ public class Autorization {
 
     private String username;
     private String fio;
-    private Date access_date;
+    private String accessDateStr;
+    private Date accessDate;
     private String application;
-
+    private String fileName;
     public String getUsername() {
         return username;
     }
@@ -25,12 +26,20 @@ public class Autorization {
         this.fio = fio;
     }
 
-    public Date getAccess_date() {
-        return access_date;
+    public String getaccessDateStr() {
+        return accessDateStr;
     }
 
-    public void setAccess_date(Date access_date) {
-        this.access_date = access_date;
+    public void setaccessDateStr(String accessDateStr) {
+        this.accessDateStr = accessDateStr;
+    }
+
+    public Date getAccessDate() {
+        return accessDate;
+    }
+
+    public void setAccessDate(Date accessDate) {
+        this.accessDate = accessDate;
     }
 
     public String getApplication() {
@@ -41,13 +50,23 @@ public class Autorization {
         this.application = application;
     }
 
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
     @Override
     public String toString() {
         return "Autorization{" +
                 "username='" + username + '\'' +
                 ", fio='" + fio + '\'' +
-                ", access_date=" + access_date +
+                ", accessDateStr='" + accessDateStr + '\'' +
+                ", accessDate=" + accessDate +
                 ", application='" + application + '\'' +
+                ", fileName='" + fileName + '\'' +
                 '}';
     }
 }
